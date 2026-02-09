@@ -15,9 +15,6 @@ envelope.addEventListener("click", () => {
     envelope.style.display = "none";
     letter.style.display = "flex";
 
-    // Play background music immediately on the click (keeps the user gesture intact)
-    try{ playMusic(); }catch(e){}
-
     setTimeout( () => {
         document.querySelector(".letter-window").classList.add("open");
     },50);
@@ -74,69 +71,51 @@ yesBtn.addEventListener("click", () => {
     finalText.style.display = "block";
 });
 
-// --- Background music (Spotify embed) ---
-const spotifyInput = document.getElementById('spotify-url');
-const savePlayBtn = document.getElementById('save-play');
-const playBtn = document.getElementById('play-btn');
-const stopBtn = document.getElementById('stop-btn');
-const message = document.getElementById('music-message');
-const playerWrap = document.getElementById('spotify-player-wrap');
-const iframe = document.getElementById('spotify-embed');
+// Background music is handled by the hidden YouTube embed in the HTML.
+// The iframe uses autoplay=1&mute=1&loop=1 to play in the background continuously.
 
-function extractSpotifyId(url){
-    if(!url) return null;
-    const m = url.match(/track\/([A-Za-z0-9]+)(\?|$)/);
-    return m ? m[1] : null;
+// --- YouTube IFrame API player setup (autoplay muted, unmute on first user click) ---
+let ytPlayer = null;
+
+function onYouTubeIframeAPIReady() {
+    ytPlayer = new YT.Player('yt-player', {
+        height: '0',
+        width: '0',
+        videoId: 'gDlp7Oji95k',
+        playerVars: {
+            autoplay: 1,
+            controls: 0,
+            rel: 0,
+            mute: 1,
+            loop: 1,
+            playlist: 'gDlp7Oji95k',
+            modestbranding: 1
+        },
+        events: {
+            onReady: function(e){
+                try{ e.target.playVideo(); }catch(e){}
+            }
+        }
+    });
 }
 
-function makeEmbedUrl(id, autoplay = false){
-    if(!id) return '';
-    // Note: autoplay on Spotify embed may be blocked by browsers.
-    let u = `https://open.spotify.com/embed/track/${id}`;
-    if(autoplay) u += '?autoplay=1';
-    return u;
-}
-
-function saveSpotifyUrl(url){
-    try{ localStorage.setItem('spotifyUrl', url); }catch(e){}
-}
-
-function loadSaved(){
-    const url = localStorage.getItem('spotifyUrl');
-    if(url){
-        spotifyInput.value = url;
-        message.textContent = 'Saved track ready.';
-    } else if (spotifyInput && spotifyInput.value){
-        // If the input has a default value (from HTML), persist it so future visits remember it
-        try{
-            localStorage.setItem('spotifyUrl', spotifyInput.value);
-            message.textContent = 'Saved track ready.';
-        }catch(e){ }
+// Unmute on first user click; if player isn't ready yet, retry a few times.
+function setupUnmuteOnFirstClick(){
+    function handler(){
+        let attempts = 0;
+        function tryUnmute(){
+            attempts++;
+            if(ytPlayer && typeof ytPlayer.unMute === 'function'){
+                try{ ytPlayer.unMute(); ytPlayer.setVolume(70); }catch(e){}
+            }else if(attempts < 10){
+                setTimeout(tryUnmute, 200);
+            }
+        }
+        tryUnmute();
+        document.removeEventListener('click', handler);
     }
+    document.addEventListener('click', handler, {once: true});
 }
 
-function playMusic(){
-    const url = spotifyInput.value || localStorage.getItem('spotifyUrl');
-    if(!url){ message.textContent = 'Paste a Spotify track URL first.'; return; }
-    const id = extractSpotifyId(url);
-    if(!id){ message.textContent = 'Invalid Spotify track URL.'; return; }
-    iframe.src = makeEmbedUrl(id, true);
-    playerWrap.style.display = 'block';
-    saveSpotifyUrl(url);
-    message.textContent = 'Playing (autoplay may be blocked; click Play if needed).';
-}
-
-function stopMusic(){
-    iframe.src = '';
-    playerWrap.style.display = 'none';
-    message.textContent = 'Stopped.';
-}
-
-savePlayBtn.addEventListener('click', playMusic);
-playBtn.addEventListener('click', () => {
-    // This user click satisfies gesture requirement in most browsers
-    playMusic();
-});
-stopBtn.addEventListener('click', stopMusic);
-
-document.addEventListener('DOMContentLoaded', loadSaved);
+// Install the unmute handler as soon as the page script runs.
+setupUnmuteOnFirstClick();

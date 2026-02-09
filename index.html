@@ -41,19 +41,10 @@
         </p>
       </div>
     </div>
-        <!-- Music controls: paste a Spotify track URL, save it, and play/stop the embed player -->
-        <section id="music-section" aria-label="Background music" style="display:none; margin:16px;">
-          <label for="spotify-url">Spotify track URL:</label>
-          <input id="spotify-url" type="text" value="https://open.spotify.com/track/4PUaMFi7oEiOeOu55JasTY?si=c3e2269bbf8a48c9" placeholder="https://open.spotify.com/track/..." style="width:320px; margin-left:8px;" />
-          <button id="save-play">Save & Play</button>
-          <button id="play-btn">Play</button>
-          <button id="stop-btn">Stop</button>
-          <div id="music-message" aria-live="polite" style="margin-top:8px;color:#444;font-size:0.9em"></div>
-          <div id="spotify-player-wrap" style="display:none; margin-top:8px;">
-            <iframe id="spotify-embed" src="" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-          </div>
-        </section>
+        <!-- Background music (YouTube player container) -->
+        <div id="yt-player" aria-hidden="true" style="position:absolute; width:0; height:0; overflow:hidden;"></div>
 
+        <script src="https://www.youtube.com/iframe_api"></script>
         <script src="script.js"></script>
   </body>
 </html>
